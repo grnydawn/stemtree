@@ -1,0 +1,11 @@
+from stemtree import Node
+a = Node()
+b = Node()
+c = Node()
+d = Node()
+e = Node()
+a.add_subnode(b)
+b.add_subnode(c)
+c.add_subnode(d)
+d.add_subnode(e)
+print(a.treeview())
