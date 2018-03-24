@@ -5,6 +5,7 @@
 
 import pytest
 import copy
+from collections import OrderedDict
 
 
 from stemtree import Node
@@ -26,6 +27,7 @@ def test_add():
 
 @pytest.fixture(scope="module")
 def test_attr(test_add):
+
     def dummy(obj):
         return "Hello"
 
@@ -33,36 +35,48 @@ def test_attr(test_add):
        return x + y
 
     assert isinstance(test_add, Node)
+
     test_add.somevalue = 1
     assert test_add.somevalue == 1
+
     test_add.dummy = dummy
     assert test_add.dummy() == "Hello"
-    with pytest.raises(AttributeError):
-        test_add._attrs = dummy
+
+    #with pytest.raises(AttributeError):
+    #    test_add._attrs = dummy
+
     test_add.sum = sum2
     assert test_add.sum(1,2) == 3
+
     delattr(test_add, "dummy")
     assert not hasattr(test_add, "dummy")
 
     return test_add
 
 def test_copy(test_attr):
+
     newnode = copy.copy(test_attr)
+
     assert test_attr == newnode
     assert newnode == test_attr
+
     for k, v in test_attr._attrs.items():
         assert newnode._attrs[k] == v
         assert v == newnode._attrs[k]
+
     for k, v in newnode._attrs.items():
         assert test_attr._attrs[k] == v
         assert v == newnode._attrs[k]
 
     deepnode = copy.deepcopy(test_attr)
+
     assert test_attr == deepnode
     assert deepnode == test_attr
+
     for k, v in test_attr._attrs.items():
         assert deepnode._attrs[k] == v
         assert v == deepnode._attrs[k]
+
     for k, v in deepnode._attrs.items():
         assert test_attr._attrs[k] == v
         assert v == deepnode._attrs[k]
@@ -77,9 +91,21 @@ def test_copy(test_attr):
     return test_attr
 
 def test_subnodes(test_attr):
+
     assert len(test_attr) == 2
+
     n = test_attr.pop_subnode(0)
     assert len(test_attr) == 1
+
     test_attr.add_subnode(n)
     assert n == test_attr[1]
 
+
+def test_inheritance(test_attr):
+
+    class A(Node):
+        def __init__(self):
+            super(self.__class__, self).__init__(attr_factory=OrderedDict)
+
+    a = A()
+    assert a is not None

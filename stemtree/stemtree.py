@@ -32,8 +32,8 @@ class Node(object):
 
     def __init__(self, uppernode=None, subnodes=None, attr_factory=dict, method_factory=dict):
 
-        super(self.__class__, self).__setattr__("_attrs", attr_factory())
-        super(self.__class__, self).__setattr__("_methods", method_factory())
+        self.__dict__["_attrs"] = attr_factory()
+        self.__dict__["_methods"] = method_factory()
 
         self.uppernode = uppernode
         self.subnodes = subnodes if subnodes else []
@@ -44,9 +44,11 @@ class Node(object):
     # attributes
     def __getattr__(self, name):
 
-        if name in self._attrs:
+        if name in self.__dict__:
+            return self.__dict__[name]
+        elif name in self.__dict__["_attrs"]:
             return self._attrs[name]
-        elif name in self._methods:
+        elif name in self.__dict__["_methods"]:
             return types.MethodType(self._methods[name], self)
         raise AttributeError("'%s' object has no attribute '%s'."% (
             self.__class__.__name__, name))
@@ -56,7 +58,7 @@ class Node(object):
         if name in ("_attrs", "_methods"):
             raise AttributeError("'%s' attribute is not mutable."%name)
         elif name in self.__slots__:
-            return super(self.__class__, self).__setattr__(name, value)
+            self.__dict__[name] = value
         elif name in dir(self):
             raise AttributeError("'%s' attribute is not mutable."%name)
         elif callable(value):
@@ -73,7 +75,7 @@ class Node(object):
         elif name in self._attrs:
             del self._attrs[name]
         else:
-            super(self.__class__, self).__delattr__(name, value)
+            del self.__dict__[name]
 
     def __hasattr__(self, name):
 
