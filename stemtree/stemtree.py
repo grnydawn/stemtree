@@ -25,6 +25,15 @@ import collections
 # - python dynamic attribute service
 # - Node creation/modification/deletion
 
+
+# Reader Writer, ... are classes that
+# - produces Nodes that are equiped with some default attributes and feature methods
+# - Reader: One of the feature methods read data and transfom it into Nodes
+# - Writer: Transfor Nodes into external data format
+# - Transformer: transform Nodes into another Nodes with possible changes on _attrs,
+#   _methods, and structure itself
+
+
 class Node(object):
 
     __slots__ = ['_attrs', '_methods', 'uppernode', 'subnodes',
@@ -111,10 +120,11 @@ class Node(object):
         return id(self)
 
     def __str__(self):
-        return "Node(%d)"%id(self)
+        out = self.__class__.__name__+"(%s)"
+        return out%self.name if hasattr(self, "name") else out%str(id(self))
 
     def __unicode__(self):
-        return u"Node(%d)"%id(self)
+        return str(self)
 
     def __repr__(self):
         return "%s %s"%(self.__class__, str(self))
@@ -213,6 +223,5 @@ class Node(object):
 
     # traversing
     def traverse(self, search_algorithm, event_handlers, data_collector):
-        pass
         pass
 
