@@ -11,7 +11,6 @@ from builtins import *
 
 import types
 import copy
-import collections
 
 # Node provides tree structure and flexible attribute and methods infrastructure
 # attribute can be MutableMapping that can have its own context
@@ -124,7 +123,8 @@ class Node(object):
         return out%self.name if hasattr(self, "name") else out%str(id(self))
 
     def __unicode__(self):
-        return str(self)
+        out = self.__class__.__name__+u"(%s)"
+        return out%self.name if hasattr(self, "name") else out%str(id(self))
 
     def __repr__(self):
         return "%s %s"%(self.__class__, str(self))
