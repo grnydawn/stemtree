@@ -11,6 +11,7 @@ from builtins import *
 
 import types
 import copy
+import abc
 
 # Node provides tree structure and flexible attribute and methods infrastructure
 # attribute can be MutableMapping that can have its own context
@@ -119,23 +120,28 @@ class Node(object):
         return id(self)
 
     def __str__(self):
-        out = self.__class__.__name__+"(%s)"
-        return out%self.name if hasattr(self, "name") else out%str(id(self))
+        if hasattr(self, 'name'):
+            return self.name
+        else:
+            return self.__class__.__name__
 
     def __unicode__(self):
-        out = self.__class__.__name__+u"(%s)"
-        return out%self.name if hasattr(self, "name") else out%str(id(self))
+        if hasattr(self, 'name'):
+            return unicode(self.name)
+        else:
+            return unicode(self.__class__.__name__)
 
     def __repr__(self):
         return "%s %s"%(self.__class__, str(self))
 
     def dirall(self):
-        return ( dir(), self._attrs.keys(), self._methods.keys() )
+        return ( self._attrs.keys(), self._methods.keys(), dir(self) )
 
-    def treeview(self):
-        lines = [str(self)]
-        lines.extend(["-"+n.treeview() for n in self.subnodes])
-        return "\n".join(lines).replace("\n-", "\n----")
+    def treeview(self, *args):
+        attrs = [a+'='+str(getattr(self, a)) for a in args if hasattr(self, a)]
+        lines = [str(self)+(' (%s)'%', '.join(attrs) if attrs else '')]
+        lines.extend(["-"+n.treeview(*args) for n in self.subnodes])
+        return "\n".join(lines).replace("\n-", "\n---|")
 
     # sequences
     def __len__(self):
@@ -163,7 +169,7 @@ class Node(object):
     #    return item in self.subnodes
 
     # copying
-    def _local_deepcopy(self):
+    def local_deepcopy(self):
         newnode = self.__class__(uppernode=self.uppernode, subnodes=[],
             attr_factory=self._attr_factory,
             method_factory=self._method_factory)
@@ -174,13 +180,13 @@ class Node(object):
         return newnode
 
     def __copy__(self):
-        newnode = self._local_deepcopy()
+        newnode = self.local_deepcopy()
         for subnode in self.subnodes:
             newnode.add_subnode(subnode)
         return newnode
 
     def __deepcopy__(self, memo={}):
-        newnode = self._local_deepcopy()
+        newnode = self.local_deepcopy()
         for subnode in self.subnodes:
             newnode.add_subnode(copy.deepcopy(subnode, memo=memo))
         return newnode
@@ -224,4 +230,3 @@ class Node(object):
     # traversing
     def traverse(self, search_algorithm, event_handlers, data_collector):
         pass
-

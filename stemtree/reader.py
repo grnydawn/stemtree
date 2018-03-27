@@ -6,12 +6,20 @@ from builtins import *
 from collections import OrderedDict
 from .node import Node
 
-class SourceLineTree(Node):
+def text(obj):
+    return ''.join([n.line for n in obj])
+
+class SourceLines(Node):
+
+    #@property
+    #def text(self):
+    #    return ''.join([n.line for n in self])
 
     def __init__(self, path):
 
         super(self.__class__, self).__init__(attr_factory=OrderedDict)
         self.name = path
+        self.text = text
 
         with open(path) as f:
             for i, line in enumerate(f):

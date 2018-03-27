@@ -7,4 +7,4 @@ __email__ = 'grnydawn@gmail.com'
 __version__ = '0.1.0'
 
 from .node import Node
-from .reader import SourceLineTree
+from .reader import SourceLines
