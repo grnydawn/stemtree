@@ -10,7 +10,7 @@ from builtins import *
 """
 
 import types
-import copy
+from copy import deepcopy
 import abc
 
 # Node provides tree structure and flexible attribute and methods infrastructure
@@ -36,19 +36,24 @@ import abc
 
 class Node(object):
 
-    __slots__ = ['_attrs', '_methods', 'uppernode', 'subnodes',
-        '_attr_factory', '_method_factory']
+    __slots__ = ['_attrs', '_methods', 'uppernode', 'subnodes']
 
-    def __init__(self, uppernode=None, subnodes=None, attr_factory=dict, method_factory=dict):
+    _shared_attrs = {}
+    _shared_methods = {}
 
-        object.__setattr__(self, '_attrs', attr_factory())
-        object.__setattr__(self, '_methods', attr_factory())
+    def __init__(self, uppernode=None, subnodes=None, attrs=None, methods=None,
+        shared_attrs=None, shared_methods=None):
+
+        object.__setattr__(self, '_attrs', attrs if attrs else {})
+        object.__setattr__(self, '_methods', methods if methods else {})
+
+        if shared_attrs:
+            self._shared_attrs.update(shared_attrs)
+        if shared_methods:
+            self._shared_methods.update(shared_methods)
 
         self.uppernode = uppernode
         self.subnodes = subnodes if subnodes else []
-
-        self._attr_factory = attr_factory
-        self._method_factory = method_factory
 
     # attributes
     def __getattr__(self, name):
@@ -57,12 +62,17 @@ class Node(object):
             return self._attrs[name]
         elif name in self._methods:
             return types.MethodType(self._methods[name], self)
+        elif name in self._shared_attrs:
+            return self._shared_attrs[name]
+        elif name in self._shared_methods:
+            return types.MethodType(self._shared_methods[name], self)
+
         raise AttributeError("'%s' object has no attribute '%s'."% (
             self.__class__.__name__, name))
 
     def __setattr__(self, name, value):
 
-        if name in ("_attrs", "_methods"):
+        if name in ('_attrs', '_methods', '_shared_attrs', '_shared_methods'):
             if name in dir(self):
                 raise AttributeError("'%s' attribute is not mutable."%name)
             else:
@@ -78,7 +88,7 @@ class Node(object):
 
     def __delattr__(self, name):
 
-        if name in ("_attrs", "_methods"):
+        if name in ('_attrs', '_methods', '_shared_attrs', '_shared_methods'):
             raise AttributeError("'%s' attribute is not mutable."%name)
         elif name in self._methods:
             del self._methods[name]
@@ -128,9 +138,9 @@ class Node(object):
 
     def __unicode__(self):
         if hasattr(self, 'name'):
-            return unicode(self.name)
+            return u'%s'%self.name
         else:
-            return unicode(self.__class__.__name__)
+            return u'%s'%self.__class__.__name__
 
     def __repr__(self):
         return "%s %s"%(self.__class__, str(self))
@@ -172,12 +182,11 @@ class Node(object):
     # copying
     def local_deepcopy(self):
         newnode = self.__class__(uppernode=self.uppernode, subnodes=[],
-            attr_factory=self._attr_factory,
-            method_factory=self._method_factory)
-        for name, value in self._attrs.items():
-            setattr(newnode, name, copy.deepcopy(value))
-        for name, value in self._methods.items():
-            setattr(newnode, name, copy.deepcopy(value))
+            attrs=deepcopy(self._attrs), methods=deepcopy(self._methods))
+#        for name, value in self._attrs.items():
+#            setattr(newnode, name, deepcopy(value))
+#        for name, value in self._methods.items():
+#            setattr(newnode, name, deepcopy(value))
         return newnode
 
     def __copy__(self):
@@ -189,7 +198,7 @@ class Node(object):
     def __deepcopy__(self, memo={}):
         newnode = self.local_deepcopy()
         for subnode in self.subnodes:
-            newnode.add_subnode(copy.deepcopy(subnode, memo=memo))
+            newnode.add_subnode(deepcopy(subnode, memo=memo))
         return newnode
 
     # pickling

@@ -105,7 +105,7 @@ def test_inheritance(test_attr):
 
     class A(Node):
         def __init__(self):
-            super(self.__class__, self).__init__(attr_factory=OrderedDict)
+            super(self.__class__, self).__init__(attrs=OrderedDict())
 
     a = A()
     assert a is not None
