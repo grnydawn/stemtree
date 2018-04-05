@@ -8,3 +8,4 @@ __version__ = '0.1.0'
 
 from .node import Node
 from .reader import SourceLines
+from .search import DFS_LF, DFS_RF

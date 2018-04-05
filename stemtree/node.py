@@ -105,31 +105,6 @@ class Node(object):
         except:
             return False
 
-    # equality
-    def __eq__(self, other):
-        """Equals when having the same public attributes/values"""
-        try:
-            for k, v in self._attrs.items():
-                if other._attrs[k] != v:
-                    return False
-            return True
-        except Exception as e:
-            return False
-
-    def __ne__(self, other):
-        """Not equals when having any different public attributes/values"""
-        try:
-            for k, v in self._attrs.items():
-                if other._attrs[k] == v:
-                    return False
-            return True
-        except:
-            return True
-
-    # representation
-    def __hash__(self):
-        return id(self)
-
     def __str__(self):
         if hasattr(self, 'name'):
             return self.name
@@ -220,7 +195,7 @@ class Node(object):
     def __reduce_ex__(self):
         import pdb; pdb.set_trace()
 
-    # subnodes functions
+    # node manipulation
     def add_subnode(self, node, index=None):
         node.uppernode = self
         if not index:
@@ -232,11 +207,48 @@ class Node(object):
         return self.subnodes.pop(index)
 
     def get_subnodes(self):
-        return self.subnodes
+        return iter(self.subnodes)
+
+    def get_uppernodes(self):
+        node = self.uppernode
+        while isinstance(node, self.__class__):
+            yield node
+            node = node.uppernode
+        return
+
+    def get_rightnode(self, moveup=True):
+
+        if not isinstance(self.uppernode, self.__class__):
+            return None
+
+        i = [id(n) for n in self.uppernode.subnodes].index(id(self))
+        if i+1 < len(self.uppernode.subnodes):
+            return self.uppernode.subnodes[i+1]
+        elif moveup:
+            return self.uppernode.get_rightnode()
+        else:
+            # check all siblings and cousins 
+            pass
+
+    def get_leftnode(self, moveup=True):
+
+        if not isinstance(self.uppernode, self.__class__):
+            return None
+
+        i = [id(n) for n in self.uppernode.subnodes].index(id(self))
+        if i > 0:
+            return self.uppernode.subnodes[i-1]
+        elif moveup:
+            return self.uppernode.get_leftnode()
+        else:
+            # check all siblings and cousins 
+            pass
 
     # attribute and methods manipulations
     # such as swapping methods
 
-    # traversing
-    def traverse(self, search_algorithm, event_handlers, data_collector):
-        pass
+    def search(self, action, move, basket={}):
+        node = self
+        while isinstance(node, self.__class__):
+            action(node, basket)
+            node = move(node, basket)
