@@ -11,7 +11,6 @@ from builtins import *
 
 import types
 from copy import deepcopy
-import abc
 
 # Node provides tree structure and flexible attribute and methods infrastructure
 # attribute can be MutableMapping that can have its own context
@@ -61,11 +60,11 @@ class Node(object):
         if name in self._attrs:
             return self._attrs[name]
         elif name in self._methods:
-            return types.MethodType(self._methods[name], self)
+            return types.MethodType(self._methods[name], self, Node)
         elif name in self._shared_attrs:
             return self._shared_attrs[name]
         elif name in self._shared_methods:
-            return types.MethodType(self._shared_methods[name], self)
+            return types.MethodType(self._shared_methods[name], self, Node)
 
         raise AttributeError("'%s' object has no attribute '%s'."% (
             self.__class__.__name__, name))
@@ -124,7 +123,7 @@ class Node(object):
         return ( self._attrs.keys(), self._methods.keys(), dir(self) )
 
     def treeview(self, *args):
-        attrs = [a+'='+str(getattr(self, a)) for a in args if hasattr(self, a)]
+        attrs = [a+'='+repr(getattr(self, a)) for a in args if hasattr(self, a)]
         lines = [str(self)+(' (%s)'%', '.join(attrs) if attrs else '')]
         lines.extend(["-"+n.treeview(*args) for n in self.subnodes])
         return "\n".join(lines).replace("\n-", "\n---|")
@@ -216,7 +215,7 @@ class Node(object):
             node = node.uppernode
         return
 
-    def get_rightnode(self, moveup=True):
+    def get_rightnode(self, moveup=None):
 
         if not isinstance(self.uppernode, self.__class__):
             return None
@@ -224,13 +223,15 @@ class Node(object):
         i = [id(n) for n in self.uppernode.subnodes].index(id(self))
         if i+1 < len(self.uppernode.subnodes):
             return self.uppernode.subnodes[i+1]
-        elif moveup:
+        elif moveup is True:
             return self.uppernode.get_rightnode()
-        else:
+        elif moveup is False:
             # check all siblings and cousins 
             pass
+        else:
+            pass
 
-    def get_leftnode(self, moveup=True):
+    def get_leftnode(self, moveup=None):
 
         if not isinstance(self.uppernode, self.__class__):
             return None
@@ -238,10 +239,12 @@ class Node(object):
         i = [id(n) for n in self.uppernode.subnodes].index(id(self))
         if i > 0:
             return self.uppernode.subnodes[i-1]
-        elif moveup:
+        elif moveup is True:
             return self.uppernode.get_leftnode()
-        else:
+        elif moveup is False:
             # check all siblings and cousins 
+            pass
+        else:
             pass
 
     # attribute and methods manipulations
