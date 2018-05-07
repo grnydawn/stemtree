@@ -6,42 +6,63 @@ from builtins import *
 """Search Algorithms for Stemtree.
 """
 
-def DFS_LF(obj, basket):
+def DFS_LF(node, basket):
     """Depth-first search from the left of a tree."""
 
-    if len(obj.subnodes) > 0:
-        return obj.subnodes[0]
+    if len(node.subnodes) > 0:
+        return node.subnodes[0]
     else:
-        return obj.get_rightnode(moveup=True)
+        return node.get_rightnode(moveup=True)
 
-def DFS_RF(obj, basket):
+def DFS_RF(node, basket):
     """Depth-first search from the right of a tree."""
-    if len(obj.subnodes) > 0:
-        return obj.subnodes[-1]
+    if len(node.subnodes) > 0:
+        return node.subnodes[-1]
     else:
-        return obj.get_leftnode(moveup=True)
+        return node.get_leftnode(moveup=True)
 
-def BFS_LF(obj, basket):
-    """Breadth-first search from the left of a tree."""
+def UPWARDS(node, basket):
+    """Upward search."""
+    return node.uppernode
 
-    node = obj.get_rightnode(moveup=False)
-    if isinstance(node, obj.__class__):
-        return node
-
-    if len(obj.subnodes) > 0:
-        return obj.subnodes[0]
-    else:
-        return None
-
-def BFS_RF(obj, basket):
-    """Breadth-first search from the right of a tree."""
-
-    node = obj.get_leftnode(moveup=False)
-    if isinstance(node, obj.__class__):
-        return node
-
-    if len(obj.subnodes) > 0:
-        return obj.subnodes[-1]
-    else:
-        return None
-
+#def BFS_LF(node, basket):
+#    """Breadth-first search from the left of a tree."""
+#
+#    node = node.get_rightnode(moveup=False)
+#    if isinstance(node, node.__class__):
+#        return node
+#
+#    if len(node.subnodes) > 0:
+#        return node.subnodes[0]
+#    else:
+#        return None
+#
+#def BFS_RF(node, basket):
+#    """Breadth-first search from the right of a tree."""
+#
+#    node = node.get_leftnode(moveup=False)
+#    if isinstance(node, node.__class__):
+#        return node
+#
+#    if len(node.subnodes) > 0:
+#        return node.subnodes[-1]
+#    else:
+#        return None
+#
+#def DFS_UP(node, basket):
+#    """Breadth-first search from the left of a tree."""
+#
+#    if len(node.subnodes) > 0:
+#        while len(node.subnodes) > 0:
+#            node = node.subnodes[0]
+#        return node
+#    else:
+#        node = node.get_rightnode(moveup=True)
+#        if isinstance(node, node.__class__):
+#            return node
+#
+#        if len(node.subnodes) > 0:
+#            return node.subnodes[0]
+#        else:
+#            return None
+#
