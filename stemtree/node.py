@@ -20,11 +20,23 @@ from copy import copy, deepcopy
 # - python dynamic attribute service
 # - Node creation/modification/deletion
 
+import sys
+sys.setrecursionlimit(1999)
+
+class UpperNodeException(Exception):
+    pass
+
+class StopNodeException(Exception):
+    pass
+
+class SiblingNodeException(Exception):
+    pass
+
 class Node(object):
 
     STOP_SEARCH = -1
 
-    __slots__ = ['_attrs', '_methods', 'uppernode', 'subnodes']
+    #__slots__ = ['_attrs', '_methods', 'uppernode', 'subnodes']
 
     _shared_attrs = {}
     _shared_methods = {}
@@ -44,25 +56,97 @@ class Node(object):
         self.subnodes = subnodes if subnodes else []
 
     # attributes
+#    def __getattribute__(self, name):
     def __getattr__(self, name):
+#
+#        import pdb; pdb.set_trace()
+#        try:
+#            return  self._attrs[name]
+#        except:
+#            pass
+#
+#        try:
+#            return types.MethodType(self._methods[name], self, Node)
+#        except:
+#            try:
+#                return types.MethodType(self._methods[name], self)
+#            except:
+#                pass
+#
+#        try:
+#            return  self._shared_attrs[name]
+#        except:
+#            pass
+#
+#        try:
+#            return types.MethodType(self._shared_methods[name], self, Node)
+#        except:
+#            try:
+#                return types.MethodType(self._shared_methods[name], self)
+#            except:
+#                pass
 
-        if name in self._attrs:
-            return self._attrs[name]
-        elif name in self._methods:
-            try:
-                return types.MethodType(self._methods[name], self, Node)
-            except TypeError:
-                return types.MethodType(self._methods[name], self)
-        elif name in self._shared_attrs:
-            return self._shared_attrs[name]
-        elif name in self._shared_methods:
-            try:
-                return types.MethodType(self._shared_methods[name], self, Node)
-            except TypeError:
-                return types.MethodType(self._shared_methods[name], self)
+#        try:
+#            return object.__getattribute__(self, "_attrs")[name]
+#        except:
+#            try:
+#                return types.MethodType(object.__getattribute__(self, "_methods")[name], self, Node)
+#            except:
+#                try:
+#                    return types.MethodType(object.__getattribute__(self, "_methods")[name], self)
+#                except:
+#                    try:
+#                        return object.__getattribute__(self, "_shared_attrs")[name]
+#                    except:
+#                        try:
+#                            return types.MethodType(object.__getattribute__(self, "_shared_methods")[name], self, Node)
+#                        except:
+#                            try:
+#                                return types.MethodType(object.__getattribute__(self, "_shared_methods")[name], self)
+#                            except:
+#                                pass
 
-        raise AttributeError("'%s' object has no attribute '%s'."% (
-            self.__class__.__name__, name))
+        if name in object.__getattribute__(self, "_attrs"):
+            return object.__getattribute__(self, "_attrs")[name]
+        elif name in object.__getattribute__(self, "_methods"):
+            try:
+                return types.MethodType(object.__getattribute__(self, "_methods")[name], self, Node)
+            except:
+                try:
+                    return types.MethodType(object.__getattribute__(self, "_methods")[name], self)
+                except:
+                    pass
+        elif name in object.__getattribute__(self, "_shared_attrs"):
+            return object.__getattribute__(self, "_shared_attrs")[name]
+        elif name in object.__getattribute__(self, "_shared_methods"):
+            try:
+                return types.MethodType(object.__getattribute__(self, "_shared_methods")[name], self, Node)
+            except:
+                try:
+                    return types.MethodType(object.__getattribute__(self, "_shared_methods")[name], self)
+                except:
+                    pass
+
+#
+#        if name in self._attrs:
+#            return self._attrs[name]
+#        elif name in self._methods:
+#            try:
+#                return types.MethodType(self._methods[name], self, Node)
+#            except TypeError:
+#                return types.MethodType(self._methods[name], self)
+#        elif name in self._shared_attrs:
+#            return self._shared_attrs[name]
+#        elif name in self._shared_methods:
+#            try:
+#                return types.MethodType(self._shared_methods[name], self, Node)
+#            except TypeError:
+#                return types.MethodType(self._shared_methods[name], self)
+#
+
+        node_name = ':"%s"'%self.name if "name" in self._attrs or "name" in self._shared_attrs else ""
+        raise AttributeError("%s%s object has no attribute '%s'."% (
+            self.__class__.__name__, node_name, name))
 
     def __setattr__(self, name, value):
 
@@ -71,9 +155,9 @@ class Node(object):
                 raise AttributeError("'%s' attribute is not mutable."%name)
             else:
                 object.__setattr__(self, name, value)
-        elif name in self.__slots__:
+        elif name in ['uppernode', 'subnodes']:
             object.__setattr__(self, name, value)
-        elif name in dir(self):
+        elif name in self.__class__.__dict__.keys():
             raise AttributeError("'%s' attribute is not mutable."%name)
         elif callable(value):
             self._methods[name] = value
@@ -235,23 +319,102 @@ class Node(object):
         return node
 
     # pickling
-    def __getinitargs__(self):
-        import pdb; pdb.set_trace()
+#    def __getinitargs__(self):
+#        import pdb; pdb.set_trace()
+#
+#    def __getnewargs__(self):
+#        import pdb; pdb.set_trace()
+#
 
-    def __getnewargs__(self):
-        import pdb; pdb.set_trace()
+#    def dump(self, nodes):
+#        def _nodeid(attrs, notes, depth=0):
+#            if depth > 3:
+#                return attrs
+#            attrsid = id(attrs)
+#            if attrsid in notes:
+#                return notes[attrsid]
+#            if isinstance(attrs, Node):
+#                notes[attrsid] = attrs
+#                attrs = attrsid
+#            else:
+#                try:
+#                    for k, v in attrs.items():
+#                        attrs[_nodeid(k, notes, depth=depth+1)] = \
+#                            _nodeid(v, notes, depth=depth+1)
+#                except AttributeError as e:
+#                    try:
+#                        for i in range(len(attrs)):
+#                            attrs[i] = _nodeid(attrs[i], notes, depth=depth+1)
+#                    except Exception as e:
+#                        pass
+#                notes[attrsid] = attrs
+#
+#            return attrs
+#
+#        nodes[id(self)] = state = {}
+#        if self.uppernode:
+#            state['uppernode'] = id(self.uppernode)
+#        else:
+#            state['uppernode'] = None
+#
+#        notes = {}
+#        #state['attrs'] = _nodeid(self._attrs, notes)
+#        #state['attrs'] = self._attrs
+#        state['methods'] = self._methods
+#        state['subnodes'] = []
+#        for subnode in self.subnodes:
+#            state['subnodes'].append(id(subnode))
+#            subnode.dump(nodes)
+#
+#    def load(self, state, nodeid, nodemap):
+#
+#        nodemap[nodeid] = self
+#
+#        for sid, sitems in state['nodes'].items():
+#            subnode = Node(
+#                uppernode=sitems['uppernode'],
+#                subnodes=sitems['subnodes'],
+#                #attrs=sitems['attrs'],
+#                methods=sitems['methods']
+#            )
+#            subnode.load(state, sid, nodemap)
+#
+#    def __getstate__(self):
+#        state = {}
+#        #state['shared_attrs'] = self._shared_attrs
+#        state['shared_methods'] = self._shared_methods
+#        state['nodeid'] = id(self)
+#        state['nodes'] = nodes = {}
+#        self.dump(nodes)
+#        return state
+#
+#    def __setstate__(self, state):
+#
+#        #import pdb; pdb.set_trace()
+#        #self._shared_attrs.update(state['shared_attrs'])
+#        self._shared_methods.update(state['shared_methods'])
+#
+#        self.__init__()
+#        nodemap = {}
+#        self.load(state, state['nodeid'], nodemap)
+#    def __reduce__(self):
+#        import pdb; pdb.set_trace()
+#
+#    def __reduce_ex__(self):
+#        import pdb; pdb.set_trace()
 
     def __getstate__(self):
-        import pdb; pdb.set_trace()
+        state = self.__dict__.copy()
+        state['shared_attrs'] = self._shared_attrs
+        state['shared_methods'] = self._shared_methods
+        return state
 
     def __setstate__(self, state):
-        import pdb; pdb.set_trace()
-
-    def __reduce__(self):
-        import pdb; pdb.set_trace()
-
-    def __reduce_ex__(self):
-        import pdb; pdb.set_trace()
+        self._shared_attrs.update(state['shared_attrs'])
+        self._shared_methods.update(state['shared_methods'])
+        del state['shared_attrs']
+        del state['shared_methods']
+        self.__dict__.update(state)
 
     # node manipulation
     def add_subnode(self, node, index=None):
@@ -274,57 +437,204 @@ class Node(object):
             node = node.uppernode
         return
 
-    def get_rightnode(self, moveup=None):
+    def get_rightnode(self, stopnode=None):
 
-        if not isinstance(self.uppernode, self.__class__):
-            return None
+        node = self
+        while type(node) == type(self):
+            try:
+                node = node._get_rightnode(stopnode=stopnode)
+                break
+            except (UpperNodeException, StopNodeException):
+                node = None
+            except SiblingNodeException:
+                node = node.uppernode
 
-        i = [id(n) for n in self.uppernode.subnodes].index(id(self))
-        if i+1 < len(self.uppernode.subnodes):
-            return self.uppernode.subnodes[i+1]
-        elif moveup is True:
-            return self.uppernode.get_rightnode(moveup=moveup)
-        elif moveup is False:
-            # check all siblings and cousins 
-            pass
-        else:
-            pass
+        if type(node) == type(self):
+            while len(node.subnodes) > 0:
+                node = node.subnodes[0]
 
-    def get_leftnode(self, moveup=None):
+        return node
 
-        if not isinstance(self.uppernode, self.__class__):
-            return None
 
-        i = [id(n) for n in self.uppernode.subnodes].index(id(self))
-        if i > 0:
-            return self.uppernode.subnodes[i-1]
-        elif moveup is True:
-            return self.uppernode.get_leftnode(moveup=moveup)
-        elif moveup is False:
-            # check all siblings and cousins 
-            pass
-        else:
-            pass
+    def _get_rightnode(self, stopnode=None):
 
-    def insert_after(self, prevnode, node):
-        previdx = self.subnodes.index(prevnode)
-        self.subnodes.insert(previdx+1, node)
+        if type(self.uppernode) != type(self):
+            raise UpperNodeException()
 
-    def insert_before(self, nextnode, node):
-        nextidx = self.subnodes.index(nextnode)
-        self.subnodes.insert(nextidx, node)
+        if self.uppernode is stopnode:
+            raise StopNodeException()
+
+        myid = id(self)
+        rightnode = None
+
+        for idx, subnode in enumerate(self.uppernode.subnodes):
+            if id(subnode) == myid:
+                if idx+1 == len(self.uppernode.subnodes):
+                    raise SiblingNodeException()
+                rightnode = self.uppernode.subnodes[idx+1]
+
+        if rightnode is stopnode:
+            raise StopNodeException()
+
+        return rightnode
+
+    def get_leftnode(self, stopnode=None):
+
+        node = self
+        while type(node) == type(self):
+            try:
+                node = node._get_leftnode(stopnode=stopnode)
+                break
+            except (UpperNodeException, StopNodeException):
+                node = None
+            except SiblingNodeException:
+                node = node.uppernode
+
+        if type(node) == type(self):
+            while len(node.subnodes) > 0:
+                node = node.subnodes[-1]
+
+        return node
+
+    def _get_leftnode(self, stopnode=None):
+
+        if type(self.uppernode) != type(self):
+            raise UpperNodeException()
+
+        if self.uppernode is stopnode:
+            raise StopNodeException()
+
+        myid = id(self)
+        leftnode = None
+
+        for idx, subnode in enumerate(self.uppernode.subnodes):
+            if id(subnode) == myid:
+                if idx == 0:
+                    raise SiblingNodeException()
+                leftnode = self.uppernode.subnodes[idx-1]
+
+        if leftnode is stopnode:
+            raise StopNodeException()
+
+        return leftnode
+
+#
+#    def get_rightnode(self, moveup=None, stopnode=None):
+#
+#        if type(self.uppernode) != type(self):
+#            return none
+#
+#        if moveup and self.uppernode is stopnode:
+#            return none
+#
+#        newnode = None
+#
+#        i = [id(n) for n in self.uppernode.subnodes].index(id(self))
+#
+#        if i+1 < len(self.uppernode.subnodes):
+#            newnode = self.uppernode.subnodes[i+1]
+#        elif moveup is True:
+#            newnode = self.uppernode.get_rightnode(moveup=moveup, stopnode=stopnode)
+#        elif moveup is False:
+#            # check all siblings and cousins 
+#            pass
+#        else:
+#            pass
+#
+#        return newnode
+#
+#    def get_leftnode(self, moveup=None, stopnode=None):
+#
+#        if type(self.uppernode) != type(self):
+#            return None
+#
+#        if moveup and self.uppernode is stopnode:
+#            return None
+#
+#        newnode = None
+#
+#        i = [id(n) for n in self.uppernode.subnodes].index(id(self))
+#
+#        if i > 0:
+#            newnode = self.uppernode.subnodes[i-1]
+#        elif moveup is True:
+#            newnode = self.uppernode.get_leftnode(moveup=moveup, stopnode=stopnode)
+#        elif moveup is False:
+#            # check all siblings and cousins 
+#            pass
+#        else:
+#            pass
+#
+#        return newnode
+
+    def insert_after(self, node):
+        previdx = self.uppernode.subnodes.index(self)
+        self.uppernode.subnodes.insert(previdx+1, node)
+        node.uppernode = self.uppernode
+
+    def insert_before(self, node):
+        nextidx = self.uppernode.subnodes.index(self)
+        self.uppernode.subnodes.insert(nextidx, node)
+        node.uppernode = self.uppernode
 
     # attribute and methods manipulations
     # such as swapping methods
 
-    def search(self, action, move, basket={}, premove=None, postmove=None):
+    def search(self, action, move, basket={}, premove=None, postmove=None, stopnode=None):
 
         node = premove(self, basket) if premove is not None else self
 
-        while isinstance(node, self.__class__):
-            if action(node, basket) == self.STOP_SEARCH:
-                break
-            else:
-                node = move(node, basket)
+        while type(node) == type(self) and action(node, basket) != self.STOP_SEARCH:
+            node = move(node, basket, stopnode)
+            if node is stopnode: break
 
         return postmove(node, basket) if postmove is not None else  node
+
+def DFS_LF(node, basket, stopnode):
+    """Depth-first search from the left of a tree."""
+
+    if len(node.subnodes) > 0:
+        newnode = node.subnodes[0]
+    else:
+        newnode = node
+        while type(node) == type(newnode):
+            try:
+                newnode = newnode._get_rightnode(stopnode=stopnode)
+                break
+            except (UpperNodeException, StopNodeException):
+                newnode = None
+            except SiblingNodeException:
+                newnode = newnode.uppernode
+
+    return newnode
+
+def DFS_RF(node, basket, stopnode):
+    """Depth-first search from the right of a tree."""
+
+    if len(node.subnodes) > 0:
+        newnode = node.subnodes[-1]
+    else:
+        newnode = node
+        while type(node) == type(newnode):
+            try:
+                newnode = newnode._get_leftnode(stopnode=stopnode)
+                break
+            except (UpperNodeException, StopNodeException):
+                newnode = None
+            except SiblingNodeException:
+                newnode = newnode.uppernode
+
+    return newnode
+
+def UPWARDS(node, basket, stopnode):
+    """Upward search."""
+
+    if node is stopnode:
+        return None
+
+    return node.uppernode
+
+def NO_SEARCH(node, basket, stopnode):
+    """No search."""
+    return None
+

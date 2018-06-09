@@ -2,28 +2,39 @@
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *
+import logging
 
 """Search Algorithms for Stemtree.
 """
 
-def DFS_LF(node, basket):
+def DFS_LF(node, basket, stopnode):
     """Depth-first search from the left of a tree."""
 
     if len(node.subnodes) > 0:
-        return node.subnodes[0]
+        newnode = node.subnodes[0]
     else:
-        return node.get_rightnode(moveup=True)
+        newnode = node.get_rightnode(moveup=True, stopnode=stopnode)
 
-def DFS_RF(node, basket):
+    return newnode
+
+def DFS_RF(node, basket, stopnode):
     """Depth-first search from the right of a tree."""
     if len(node.subnodes) > 0:
-        return node.subnodes[-1]
+        newnode = node.subnodes[-1]
     else:
-        return node.get_leftnode(moveup=True)
+        newnode = node.get_leftnode(moveup=True, stopnode=stopnode)
 
-def UPWARDS(node, basket):
+    return newnode
+
+def UPWARDS(node, basket, stopnode):
     """Upward search."""
-    return node.uppernode
+    newnode = node.uppernode
+
+    return newnode
+
+def NO_SEARCH(node, basket, stopnode):
+    """No search."""
+    return None
 
 #def BFS_LF(node, basket):
 #    """Breadth-first search from the left of a tree."""
